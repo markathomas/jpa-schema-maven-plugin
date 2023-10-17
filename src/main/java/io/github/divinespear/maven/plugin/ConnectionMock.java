@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-final class ConnectionMock
+public final class ConnectionMock
     implements Connection {
 
   private final String productName;
@@ -51,7 +51,7 @@ final class ConnectionMock
 
   @Override
   public Statement createStatement() {
-    return null;
+    return new StatementMock();
   }
 
   @Override
@@ -95,7 +95,7 @@ final class ConnectionMock
     return false;
   }
 
-  private final DatabaseMetaData metadataInstance = new DatabaseMetaDataMock();
+  private final DatabaseMetaData metadataInstance = new DatabaseMetaDataMock(this);
 
   @Override
   public DatabaseMetaData getMetaData() {
@@ -141,7 +141,7 @@ final class ConnectionMock
   @Override
   public Statement createStatement(int resultSetType,
                                    int resultSetConcurrency) {
-    return null;
+    return new StatementMock();
   }
 
   @Override
@@ -198,7 +198,7 @@ final class ConnectionMock
   public Statement createStatement(int resultSetType,
                                    int resultSetConcurrency,
                                    int resultSetHoldability) {
-    return null;
+    return new StatementMock();
   }
 
   @Override
@@ -317,6 +317,12 @@ final class ConnectionMock
 
   final class DatabaseMetaDataMock
       implements DatabaseMetaData {
+
+    private final Connection conn;
+
+    DatabaseMetaDataMock(Connection conn) {
+      this.conn = conn;
+    }
 
     @Override
     public <T> T unwrap(Class<T> iface) {
@@ -1152,7 +1158,7 @@ final class ConnectionMock
 
     @Override
     public Connection getConnection() {
-      return null;
+      return this.conn;
     }
 
     @Override

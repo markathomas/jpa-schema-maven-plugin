@@ -28,28 +28,28 @@ public class Constants {
   }
 
   /* jpa common */
-  public static final String JAVAX_SCHEMA_GENERATION_NONE_ACTION = "none";
-  public static final String JAVAX_SCHEMA_GENERATION_DATABASE_ACTION = "javax.persistence.schema-generation.database.action";
-  public static final String JAVAX_SCHEMA_GENERATION_SCRIPTS_ACTION = "javax.persistence.schema-generation.scripts.action";
-  public static final String JAVAX_SCHEMA_GENERATION_SCRIPTS_CREATE_TARGET = "javax.persistence.schema-generation.scripts.create-target";
-  public static final String JAVAX_SCHEMA_GENERATION_SCRIPTS_DROP_TARGET = "javax.persistence.schema-generation.scripts.drop-target";
-  public static final String JAVAX_SCHEMA_DATABASE_PRODUCT_NAME = "javax.persistence.database-product-name";
-  public static final String JAVAX_SCHEMA_DATABASE_MAJOR_VERSION = "javax.persistence.database-major-version";
-  public static final String JAVAX_SCHEMA_DATABASE_MINOR_VERSION = "javax.persistence.database-minor-version";
-  public static final String JAVAX_JDBC_DRIVER = "javax.persistence.jdbc.driver";
-  public static final String JAVAX_JDBC_URL = "javax.persistence.jdbc.url";
-  public static final String JAVAX_JDBC_USER = "javax.persistence.jdbc.user";
-  public static final String JAVAX_JDBC_PASSWORD = "javax.persistence.jdbc.password";
-  public static final String JAVAX_SCHEMA_GENERATION_METADATA_SOURCE = "metadata";
-  public static final String JAVAX_SCHEMA_GENERATION_CREATE_SOURCE = "javax.persistence.schema-generation.create-source";
-  public static final String JAVAX_SCHEMA_GENERATION_DROP_SOURCE = "javax.persistence.schema-generation.drop-source";
-  public static final String JAVAX_SCHEMA_GENERATION_CREATE_SCRIPT_SOURCE = "javax.persistence.schema-generation.create-script-source";
-  public static final String JAVAX_SCHEMA_GENERATION_DROP_SCRIPT_SOURCE = "javax.persistence.schema-generation.drop-script-source";
-  public static final String JAVAX_SCHEMA_GEN_CONNECTION = "javax.persistence.schema-generation-connection";
-  public static final String JAVAX_VALIDATION_MODE = "javax.persistence.validation.mode";
-  public static final String JAVAX_TRANSACTION_TYPE = "javax.persistence.transactionType";
-  public static final String JAVAX_JTA_DATASOURCE = "javax.persistence.jtaDataSource";
-  public static final String JAVAX_NON_JTA_DATASOURCE = "javax.persistence.nonJtaDataSource";
+  public static final String JAKARTA_SCHEMA_GENERATION_NONE_ACTION = "none";
+  public static final String JAKARTA_SCHEMA_GENERATION_DATABASE_ACTION = "jakarta.persistence.schema-generation.database.action";
+  public static final String JAKARTA_SCHEMA_GENERATION_SCRIPTS_ACTION = "jakarta.persistence.schema-generation.scripts.action";
+  public static final String JAKARTA_SCHEMA_GENERATION_SCRIPTS_CREATE_TARGET = "jakarta.persistence.schema-generation.scripts.create-target";
+  public static final String JAKARTA_SCHEMA_GENERATION_SCRIPTS_DROP_TARGET = "jakarta.persistence.schema-generation.scripts.drop-target";
+  public static final String JAKARTA_SCHEMA_DATABASE_PRODUCT_NAME = "jakarta.persistence.database-product-name";
+  public static final String JAKARTA_SCHEMA_DATABASE_MAJOR_VERSION = "jakarta.persistence.database-major-version";
+  public static final String JAKARTA_SCHEMA_DATABASE_MINOR_VERSION = "jakarta.persistence.database-minor-version";
+  public static final String JAKARTA_JDBC_DRIVER = "jakarta.persistence.jdbc.driver";
+  public static final String JAKARTA_JDBC_URL = "jakarta.persistence.jdbc.url";
+  public static final String JAKARTA_JDBC_USER = "jakarta.persistence.jdbc.user";
+  public static final String JAKARTA_JDBC_PASSWORD = "jakarta.persistence.jdbc.password";
+  public static final String JAKARTA_SCHEMA_GENERATION_METADATA_SOURCE = "metadata";
+  public static final String JAKARTA_SCHEMA_GENERATION_CREATE_SOURCE = "jakarta.persistence.schema-generation.create-source";
+  public static final String JAKARTA_SCHEMA_GENERATION_DROP_SOURCE = "jakarta.persistence.schema-generation.drop-source";
+  public static final String JAKARTA_SCHEMA_GENERATION_CREATE_SCRIPT_SOURCE = "jakarta.persistence.schema-generation.create-script-source";
+  public static final String JAKARTA_SCHEMA_GENERATION_DROP_SCRIPT_SOURCE = "jakarta.persistence.schema-generation.drop-script-source";
+  public static final String JAKARTA_SCHEMA_GEN_CONNECTION = "jakarta.persistence.schema-generation-connection";
+  public static final String JAKARTA_VALIDATION_MODE = "jakarta.persistence.validation.mode";
+  public static final String JAKARTA_TRANSACTION_TYPE = "jakarta.persistence.transactionType";
+  public static final String JAKARTA_JTA_DATASOURCE = "jakarta.persistence.jtaDataSource";
+  public static final String JAKARTA_NON_JTA_DATASOURCE = "jakarta.persistence.nonJtaDataSource";
 
   /* eclipse specific */
   public static final String ECLIPSELINK_PERSISTENCE_XML = "eclipselink.persistencexml";
@@ -61,7 +61,7 @@ public class Constants {
 
   /* values */
   public static final String DEFAULT_PERSISTENCE_UNIT_NAME = "default";
-  public static final String JAVAX_TRANSACTION_TYPE_RESOURCE_LOCAL = "RESOURCE_LOCAL";
+  public static final String JAKARTA_TRANSACTION_TYPE_RESOURCE_LOCAL = "RESOURCE_LOCAL";
 
   /* predefined providers */
   public static final Map<String, String> PERSISTENCE_PROVIDER_MAP;

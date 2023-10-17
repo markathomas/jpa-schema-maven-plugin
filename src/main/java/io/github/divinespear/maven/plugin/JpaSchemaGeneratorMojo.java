@@ -19,6 +19,27 @@
 
 package io.github.divinespear.maven.plugin;
 
+import jakarta.persistence.Persistence;
+import jakarta.persistence.spi.PersistenceProvider;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
+import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.repository.RepositorySystem;
+import org.codehaus.plexus.util.StringUtils;
+import org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager;
+import org.springframework.orm.jpa.persistenceunit.SmartPersistenceUnitInfo;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -38,30 +59,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javax.persistence.Persistence;
-import javax.persistence.spi.PersistenceProvider;
-
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
-import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.repository.RepositorySystem;
-import org.codehaus.plexus.util.StringUtils;
-import org.eclipse.persistence.config.PersistenceUnitProperties;
-import org.hibernate.tool.hbm2ddl.SchemaExport;
-import org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager;
-import org.springframework.orm.jpa.persistenceunit.SmartPersistenceUnitInfo;
-
 /**
  * Generate database schema or DDL scripts.
  * 
@@ -70,6 +67,8 @@ import org.springframework.orm.jpa.persistenceunit.SmartPersistenceUnitInfo;
 @Mojo(name = "generate", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
 public class JpaSchemaGeneratorMojo
         extends AbstractMojo {
+
+    public static final ThreadLocal<JpaSchemaGeneratorMojo> CURRENT = new ThreadLocal<>();
 
     private final Log log = this.getLog();
 
@@ -115,11 +114,9 @@ public class JpaSchemaGeneratorMojo
     /**
      * location of {@code persistence.xml} file
      * <p>
-     * Note for Hibernate <b>DOES NOT SUPPORT custom location.</b> ({@link SchemaExport} support it, but JPA 2.1 schema
-     * generator does NOT.)
-     */
-    @Parameter(required = true, defaultValue = PersistenceUnitProperties.ECLIPSELINK_PERSISTENCE_XML_DEFAULT)
-    private String persistenceXml = PersistenceUnitProperties.ECLIPSELINK_PERSISTENCE_XML_DEFAULT;
+     * Note for Hibernate <b>DOES NOT SUPPORT custom location.</b>      */
+    @Parameter(required = true, defaultValue = "META-INF/persistence.xml")
+    private String persistenceXml = "META-INF/persistence.xml";
 
     public String getPersistenceXml() {
         return persistenceXml;
@@ -143,8 +140,8 @@ public class JpaSchemaGeneratorMojo
      * <p>
      * {@code create-or-extend-tables} only support for EclipseLink with database target.
      */
-    @Parameter(required = true, defaultValue = PersistenceUnitProperties.SCHEMA_GENERATION_NONE_ACTION)
-    private String databaseAction = PersistenceUnitProperties.SCHEMA_GENERATION_NONE_ACTION;
+    @Parameter(required = true, defaultValue = "none")
+    private String databaseAction = "none";
 
     public String getDatabaseAction() {
         return databaseAction;
@@ -155,8 +152,8 @@ public class JpaSchemaGeneratorMojo
      * <p>
      * support value is {@code none}, {@code create}, {@code drop}, or {@code drop-and-create}.
      */
-    @Parameter(required = true, defaultValue = PersistenceUnitProperties.SCHEMA_GENERATION_NONE_ACTION)
-    private String scriptAction = PersistenceUnitProperties.SCHEMA_GENERATION_NONE_ACTION;
+    @Parameter(required = true, defaultValue = "none")
+    private String scriptAction = "none";
 
     public String getScriptAction() {
         return scriptAction;
@@ -214,8 +211,8 @@ public class JpaSchemaGeneratorMojo
      * support value is {@code metadata}, {@code script}, {@code metadata-then-script}, or
      * {@code script-then-metadata}.
      */
-    @Parameter(defaultValue = PersistenceUnitProperties.SCHEMA_GENERATION_METADATA_SOURCE)
-    private String createSourceMode = PersistenceUnitProperties.SCHEMA_GENERATION_METADATA_SOURCE;
+    @Parameter(defaultValue = "metadata")
+    private String createSourceMode = "metadata";
 
     public String getCreateSourceMode() {
         return createSourceMode;
@@ -241,8 +238,8 @@ public class JpaSchemaGeneratorMojo
      * support value is {@code metadata}, {@code script}, {@code metadata-then-script}, or
      * {@code script-then-metadata}.
      */
-    @Parameter(defaultValue = PersistenceUnitProperties.SCHEMA_GENERATION_METADATA_SOURCE)
-    private String dropSourceMode = PersistenceUnitProperties.SCHEMA_GENERATION_METADATA_SOURCE;
+    @Parameter(defaultValue = "metadata")
+    private String dropSourceMode = "metadata";
 
     public String getDropSourceMode() {
         return dropSourceMode;
@@ -500,65 +497,35 @@ public class JpaSchemaGeneratorMojo
     }
 
     private void generate() throws Exception {
-        Map<String, Object> map = JpaSchemaGeneratorUtils.buildProperties(this);
-        if (getVendor() == null) {
-            // with persistence.xml
-            Persistence.generateSchema(this.persistenceUnitName, map);
-        } else {
-            PersistenceProvider provider = getProviderClass().newInstance();
-            List<String> packages = getPackageToScan();
-            if (packages.isEmpty()) {
-                throw new IllegalArgumentException("packageToScan is required on xml-less mode.");
-            }
+        CURRENT.set(this);
+        try {
+            Map<String, Object> map = JpaSchemaGeneratorUtils.buildProperties(this);
+            if (getVendor() == null) {
+                // with persistence.xml
+                Persistence.generateSchema(this.persistenceUnitName, map);
+            } else {
+                PersistenceProvider provider = getProviderClass().newInstance();
+                List<String> packages = getPackageToScan();
+                if (packages.isEmpty()) {
+                    throw new IllegalArgumentException("packageToScan is required on xml-less mode.");
+                }
 
-            DefaultPersistenceUnitManager manager = new DefaultPersistenceUnitManager();
-            manager.setDefaultPersistenceUnitName(getPersistenceUnitName());
-            manager.setPackagesToScan(packages.toArray(new String[packages.size()]));
-            // issue #22
-            Field persistenceXmlLocations = manager.getClass().getDeclaredField("persistenceXmlLocations");
-            persistenceXmlLocations.setAccessible(true);
-            persistenceXmlLocations.set(manager, new String[0]);
-            manager.afterPropertiesSet();
+                DefaultPersistenceUnitManager manager = new DefaultPersistenceUnitManager();
+                manager.setDefaultPersistenceUnitName(getPersistenceUnitName());
+                manager.setPackagesToScan(packages.toArray(new String[packages.size()]));
+                // issue #22
+                Field persistenceXmlLocations = manager.getClass().getDeclaredField("persistenceXmlLocations");
+                persistenceXmlLocations.setAccessible(true);
+                persistenceXmlLocations.set(manager, new String[0]);
+                manager.afterPropertiesSet();
 
-            SmartPersistenceUnitInfo info = (SmartPersistenceUnitInfo) manager.obtainDefaultPersistenceUnitInfo();
-            info.setPersistenceProviderPackageName(provider.getClass().getName());
-            info.getProperties().putAll(map);
-
-            // Path persistenceXml = null;
-            /* @formatter:off */
-            // if (Vendor.datanucleus.equals(getVendor())) {
-            // // datanucleus must need persistence.xml
-            // Path path = Paths.get(project.getBuild().getOutputDirectory(), "META-INF");
-            // persistenceXml = Files.createTempFile(path, "persistence-", ".xml");
-            // try (BufferedWriter writer = Files.newBufferedWriter(persistenceXml, StandardCharsets.UTF_8)) {
-            // PrintWriter out = new PrintWriter(writer);
-            // out.println("<?xml version=\"1.0\" encoding=\"utf-8\" ?>");
-            // out.println("<persistence version=\"2.1\"");
-            // out.println(" xmlns=\"http://xmlns.jcp.org/xml/ns/persistence\"
-            // xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-            // out.println(" xsi:schemaLocation=\"http://xmlns.jcp.org/xml/ns/persistence
-            // http://www.oracle.com/webfolder/technetwork/jsc/xml/ns/persistence/persistence_2_1.xsd\">");
-            // out.printf(" <persistence-unit name=\"%s\" transaction-type=\"RESOURCE_LOCAL\">\n",
-            // info.getPersistenceUnitName());
-            // out.println(" <provider>org.datanucleus.api.jpa.PersistenceProviderImpl</provider>");
-            // out.println(" <exclude-unlisted-classes>false</exclude-unlisted-classes>");
-            // out.println(" </persistence-unit>");
-            // out.println("</persistence>");
-            // }
-            // map.put(PropertyNames.PROPERTY_PERSISTENCE_XML_FILENAME, persistenceXml.toAbsolutePath().toString());
-            // // datanucleus does not support execution order...
-            // map.remove(PersistenceUnitProperties.SCHEMA_GENERATION_CREATE_SOURCE);
-            // map.remove(PersistenceUnitProperties.SCHEMA_GENERATION_DROP_SOURCE);
-            // }
-            /* @formatter:on */
-
-            try {
+                SmartPersistenceUnitInfo info = (SmartPersistenceUnitInfo) manager.obtainDefaultPersistenceUnitInfo();
+                info.setPersistenceProviderPackageName(provider.getClass().getName());
+                info.getProperties().putAll(map);
                 provider.generateSchema(info, map);
-            } finally {
-                // if (persistenceXml != null) {
-                // Files.delete(persistenceXml);
-                // }
             }
+        } finally {
+            CURRENT.remove();
         }
     }
 

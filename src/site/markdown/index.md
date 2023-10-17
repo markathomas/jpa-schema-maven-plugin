@@ -2,10 +2,10 @@
 
 [![Build Status](https://secure.travis-ci.org/divinespear/jpa-schema-maven-plugin.png)](http://travis-ci.org/divinespear/jpa-schema-maven-plugin)
 
-Maven plugin for generate schema or DDL scripts from JPA entities using [JPA 2.1](http://jcp.org/en/jsr/detail?id=338) schema generator.
+Maven plugin for generate schema or DDL scripts from JPA entities using [JPA 3.1](http://jcp.org/en/jsr/detail?id=338) schema generator.
 for Gradle, see [Gradle Plugin](https://github.com/divinespear/jpa-schema-gradle-plugin).
 
-Currently support [EclipseLink](http://www.eclipse.org/eclipselink) (Reference Implementation) and [Hibernate](http://hibernate.org).
+Currently supporting [Hibernate](http://hibernate.org).
 
 ## Before Announce...
 
@@ -13,6 +13,12 @@ READ MY LIP; **JPA DDL GENERATOR IS NOT SILVER BULLET**
 
 Sometimes (*most times* exactly :P) JPA will generate weird scripts so you **SHOULD** modify them properly.
 
+## Announce 0.3
+
+* Changed default version of implementation
+    * Hibernate `6.2.13.Final`
+* Requires Java 17 
+* Works for JPA 3.1
 
 ## Announce 0.2
 
@@ -44,6 +50,10 @@ Define plugin at your maven `pom.xml` file like below.
 					<artifactId>jpa-schema-maven-plugin</artifactId>
 					<version>0.1.12</version>
 					<configuration>
+                        <properties>
+                          <!-- Add this to not require a DB connection -->
+                          <hibernate.connection.provider_class>io.github.divinespear.maven.plugin.MockConnectionProvider</hibernate.connection.provider_class>
+                        </properties>
 						...
 					</configuration>
 					<executions>
@@ -51,7 +61,7 @@ Define plugin at your maven `pom.xml` file like below.
 						...
 					</executions>
 					<dependencies>
-						<!-- JDBC driver here (if you don't defined in dependencies) -->
+						<!-- JDBC driver here (if you don't defined in dependencies, unnecessary with MockConnectionProvider) -->
 						...
 					</dependencies>
 				</plugin>
